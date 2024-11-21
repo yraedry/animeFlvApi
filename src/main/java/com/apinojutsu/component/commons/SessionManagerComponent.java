@@ -1,4 +1,4 @@
-package com.apinojutsu.components.commons;
+package com.apinojutsu.component.commons;
 
 import org.springframework.stereotype.Component;
 

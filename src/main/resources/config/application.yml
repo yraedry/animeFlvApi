@@ -1,7 +1,7 @@
 spring:
   application:
-    name : AniSyncApi
+    name : api-no-jutsu
 web:
   animeflv:
     login-url : https://www3.animeflv.net/auth/sign_in
-    home-url : https://animeflv.net/
+    home-url : https://www3.animeflv.net/

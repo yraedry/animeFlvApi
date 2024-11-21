@@ -1,4 +1,4 @@
-package com.apinojutsu.components.commons;
+package com.apinojutsu.component.commons;
 
 import com.microsoft.playwright.*;
 import org.springframework.stereotype.Component;
@@ -19,13 +19,13 @@ public class PlaywrightManagerComponent {
     }
 
     /**
-     * Retorna una nueva página del navegador.
+     * Retorna una nueva pagina del navegador.
      *
-     * @return Page (página Playwright)
+     * @return Page (pagina Playwright)
      */
     public Page getPage() {
         if (browser == null) {
-            throw new IllegalStateException("El navegador no está inicializado. Llama a initializeBrowser() primero.");
+            throw new IllegalStateException("El navegador no esta inicializado. Llama a initializeBrowser() primero.");
         }
         return browser.newPage();
     }

@@ -1,13 +1,12 @@
-package com.apinojutsu.components.animeflv.scrapper;
+package com.apinojutsu.component.animeflv.scrapper;
 
-import com.apinojutsu.components.commons.PlaywrightManagerComponent;
+import com.apinojutsu.component.commons.PlaywrightManagerComponent;
 import com.apinojutsu.dto.InformacionAnimeDto;
 import com.apinojutsu.dto.NovedadesAnimeFlvDto;
 import com.apinojutsu.dto.NovedadesEpisodiosAnimeFlvDto;
 import com.apinojutsu.utils.MessageUtils;
 import com.microsoft.playwright.ElementHandle;
 import com.microsoft.playwright.Page;
-import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -35,23 +34,44 @@ public class AnimeFlvScraperComponent {
     private String homeUrl;
 
     /**
-     * Inicia sesión en AnimeFLV y almacena las cookies para futuras solicitudes.
+     * Realiza el login en AnimeFLV utilizando Playwright.
+     *
+     * @param username Nombre de usuario.
+     * @param password Contraseña.
+     * @return Mapa con el estado del login y las cookies si es exitoso.
      */
-    public Map<String, String> login(String username, String password) throws IOException {
-        Connection.Response loginResponse = Jsoup.connect(loginUrl)
-                .data("username", username)
-                .data("password", password)
-                .method(Connection.Method.POST)
-                .execute();
-        if (loginResponse.statusCode() == 200) {
-            return loginResponse.cookies();
+    public Map<String, String> login(String username, String password) {
+        Map<String, String> responseMap = new HashMap<>();
+        playwrightManager.initializeBrowser();
+        Page page = playwrightManager.getPage();
+
+        try {
+            // Navegar al login de AnimeFLV
+            page.navigate(loginUrl);
+
+            // Completar formulario de login
+            page.fill("input[name='email']", username);
+            page.fill("input[name='password']", password);
+
+            // Enviar formulario
+            page.click("button[type='submit']");
+            String currentUrl = page.url();
+            if (currentUrl.equals(homeUrl)){
+                responseMap.put("status", "success");
+                // Extraer cookies
+                page.context().cookies().forEach(cookie -> responseMap.put(cookie.name, cookie.value));
+            }
+        } catch (Exception e) {
+            responseMap.put("status", "error");
+            responseMap.put("message", "An error occurred: " + e.getMessage());
+        } finally {
+            playwrightManager.closeBrowser();
         }
-        throw new IOException(messageUtils.getMessage("animeflv.login.fallo", username));
+        return responseMap;
     }
 
-
     /**
-     * Obtiene los últimos episodios agregados.
+     * Obtiene los ultimos episodios agregados.
      */
     public List<NovedadesEpisodiosAnimeFlvDto> obtenerUltimosEpisodiosNovedades(Map<String, String> cookies) throws IOException {
         if (cookies == null) {
@@ -60,7 +80,7 @@ public class AnimeFlvScraperComponent {
         List<NovedadesEpisodiosAnimeFlvDto> episodios = new ArrayList<>();
         Document doc = Jsoup.connect(homeUrl).get();
 
-        // Busca los elementos que contienen los últimos episodios
+        // Busca los elementos que contienen los ultimos episodios
         Elements episodioElements = doc.select(".ListEpisodios li");
 
         for (Element episodio : episodioElements) {
@@ -82,7 +102,7 @@ public class AnimeFlvScraperComponent {
         List<NovedadesAnimeFlvDto> animes = new ArrayList<>();
         Document doc = Jsoup.connect(homeUrl + "/browse").get();
 
-        // Busca los elementos que contienen los últimos animes agregados
+        // Busca los elementos que contienen los ultimos animes agregados
         Elements animeElements = doc.select(".ListAnimes li");
         Set<String> titulosUnicos = new HashSet<>();
         for (Element anime : animeElements) {
@@ -128,7 +148,7 @@ public class AnimeFlvScraperComponent {
                 informacionAnime.addEpisodio(episodio, urlEpisodio);
             }
         } finally {
-            // Cierra la página después de completar el scraping
+            // Cierra la pagina despues de completar el scraping
             playwrightManager.closeBrowser();
         }
 
