@@ -1,4 +1,4 @@
-package com.animeflv.api.component.session;
+package com.apinojutsu.components.commons;
 
 import org.springframework.stereotype.Component;
 

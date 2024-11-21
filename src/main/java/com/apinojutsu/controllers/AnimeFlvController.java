@@ -1,12 +1,12 @@
-package com.animeflv.api.controller;
+package com.apinojutsu.controllers;
 
-import com.animeflv.api.component.scrapper.AnimeFlvScraperComponent;
-import com.animeflv.api.component.session.SessionManagerComponent;
-import com.animeflv.api.dto.InformacionAnimeDto;
-import com.animeflv.api.dto.NovedadesAnimeFlvDto;
-import com.animeflv.api.dto.NovedadesEpisodiosAnimeFlvDto;
-import com.animeflv.api.dto.LoginAnimeFlvDto;
-import com.animeflv.api.utils.MessageUtils;
+import com.apinojutsu.components.animeflv.scrapper.AnimeFlvScraperComponent;
+import com.apinojutsu.components.commons.SessionManagerComponent;
+import com.apinojutsu.dto.InformacionAnimeDto;
+import com.apinojutsu.dto.NovedadesAnimeFlvDto;
+import com.apinojutsu.dto.NovedadesEpisodiosAnimeFlvDto;
+import com.apinojutsu.dto.LoginAnimeFlvDto;
+import com.apinojutsu.utils.MessageUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

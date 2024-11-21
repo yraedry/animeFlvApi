@@ -1,4 +1,4 @@
-package com.animeflv.api.component.scrapper;
+package com.apinojutsu.components.commons;
 
 import com.microsoft.playwright.*;
 import org.springframework.stereotype.Component;

@@ -1,4 +1,4 @@
-package com.animeflv.api.dto;
+package com.apinojutsu.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

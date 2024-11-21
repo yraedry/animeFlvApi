@@ -1,9 +1,10 @@
-package com.animeflv.api.component.scrapper;
+package com.apinojutsu.components.animeflv.scrapper;
 
-import com.animeflv.api.dto.InformacionAnimeDto;
-import com.animeflv.api.dto.NovedadesAnimeFlvDto;
-import com.animeflv.api.dto.NovedadesEpisodiosAnimeFlvDto;
-import com.animeflv.api.utils.MessageUtils;
+import com.apinojutsu.components.commons.PlaywrightManagerComponent;
+import com.apinojutsu.dto.InformacionAnimeDto;
+import com.apinojutsu.dto.NovedadesAnimeFlvDto;
+import com.apinojutsu.dto.NovedadesEpisodiosAnimeFlvDto;
+import com.apinojutsu.utils.MessageUtils;
 import com.microsoft.playwright.ElementHandle;
 import com.microsoft.playwright.Page;
 import org.jsoup.Connection;

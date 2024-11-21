@@ -1,4 +1,4 @@
-package com.animeflv.api.utils;
+package com.apinojutsu.utils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;

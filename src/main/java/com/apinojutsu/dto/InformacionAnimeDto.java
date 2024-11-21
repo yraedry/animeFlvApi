@@ -1,4 +1,4 @@
-package com.animeflv.api.dto;
+package com.apinojutsu.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
