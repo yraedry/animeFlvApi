@@ -3,7 +3,6 @@ package com.apinojutsu.test.animeflv;
 import com.apinojutsu.component.animeflv.scrapper.AnimeFlvScraperComponent;
 import com.apinojutsu.component.commons.PlaywrightManagerComponent;
 import com.apinojutsu.dto.NovedadesEpisodiosAnimeFlvDto;
-import com.apinojutsu.utils.MessageUtils;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.Cookie;
@@ -33,9 +32,6 @@ public class AnimeFlvScraperComponentTest {
 
     private final String LOGIN_URL_TEST = "https://mock-login-url";
     private final String HOME_URL_TEST = "https://mock-home-url";
-
-    @Mock
-    private MessageUtils messageUtils;
 
     @Mock
     private PlaywrightManagerComponent playwrightManager;
@@ -110,22 +106,9 @@ public class AnimeFlvScraperComponentTest {
         assertTrue(response.isEmpty());
     }
 
-    @Test
-    public void testObtenerUltimosEpisodiosNovedades_CookiesNull() {
-        // Configurar mock para el mensaje de error
-        when(messageUtils.getMessage(eq("error.session.notfound"))).thenReturn("Session not found");
-
-        // Ejecutar el método con cookies null y verificar que lanza IllegalStateException
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
-                scraperComponent.obtenerUltimosEpisodiosNovedades(null)
-        );
-
-        // Verificar el mensaje de la excepcion
-        assertEquals("Session not found", exception.getMessage());
-    }
 
     @Test
-    public void testObtenerUltimosEpisodiosNovedades_ValidCookies() throws IOException {
+    public void testObtenerUltimosEpisodiosNovedades() throws IOException {
         // Simular el documento HTML de Jsoup
         Document mockDocument = mock(Document.class);
         Elements mockElements = mock(Elements.class);
@@ -150,8 +133,7 @@ public class AnimeFlvScraperComponentTest {
             when(mockConnection.get()).thenReturn(mockDocument);
 
             // Ejecutar el metodo con cookies validas
-            Map<String, String> cookies = Map.of("session", "valid");
-            List<NovedadesEpisodiosAnimeFlvDto> episodios = scraperComponent.obtenerUltimosEpisodiosNovedades(cookies);
+            List<NovedadesEpisodiosAnimeFlvDto> episodios = scraperComponent.obtenerUltimosEpisodiosNovedades();
 
             // Verificar los resultados
             assertNotNull(episodios);

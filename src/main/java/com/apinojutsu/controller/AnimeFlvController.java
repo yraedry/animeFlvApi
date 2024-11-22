@@ -1,7 +1,7 @@
 package com.apinojutsu.controller;
 
 import com.apinojutsu.component.animeflv.scrapper.AnimeFlvScraperComponent;
-import com.apinojutsu.component.commons.SessionManagerComponent;
+import com.apinojutsu.component.commons.PlaywrightManagerComponent;
 import com.apinojutsu.dto.InformacionAnimeDto;
 import com.apinojutsu.dto.NovedadesAnimeFlvDto;
 import com.apinojutsu.dto.NovedadesEpisodiosAnimeFlvDto;
@@ -19,80 +19,52 @@ import java.util.Map;
 public class AnimeFlvController {
 
     private final AnimeFlvScraperComponent animeFlvScraper;
-    private final SessionManagerComponent sessionManager;
 
     @Autowired
     private MessageUtils messageUtils;
 
     @Autowired
-    public AnimeFlvController(AnimeFlvScraperComponent animeFlvScraper, SessionManagerComponent sessionManager) {
+    public AnimeFlvController(AnimeFlvScraperComponent animeFlvScraper, PlaywrightManagerComponent playwrightManagerComponent) {
         this.animeFlvScraper = animeFlvScraper;
-        this.sessionManager= sessionManager;
     }
 
     @PostMapping("/login")
     public LoginAnimeFlvDto login(@RequestParam String username, @RequestParam String password) {
         try {
-            // Realiza el login y guarda las cookies en la sesion
-            Map<String, String> cookies = animeFlvScraper.login(username, password);
-            if (cookies != null && !cookies.isEmpty()) {
-                if (cookies.get("status").equalsIgnoreCase("success")) {
-                    sessionManager.addSession(username, cookies);
-                    return new LoginAnimeFlvDto(cookies.get("status"), username, messageUtils.getMessage("animeflv.login.correcto", username), cookies);
-                }
+            // Realiza el login
+            Map<String, String> loginResponse = animeFlvScraper.login(username, password);
+            if ("success".equalsIgnoreCase(loginResponse.get("status"))) {
+                return new LoginAnimeFlvDto(loginResponse.get("status"), username, messageUtils.getMessage("animeflv.login.correcto", username));
             }
-            return new LoginAnimeFlvDto("error", username, messageUtils.getMessage("animeflv.login.fallo", username), null);
+            return new LoginAnimeFlvDto("error", username, messageUtils.getMessage("animeflv.login.fallo", username));
         } catch (Exception e) {
-            return new LoginAnimeFlvDto("error", username,messageUtils.getMessage("animeflv.login.fallo", username),null);
+            return new LoginAnimeFlvDto("error", username, messageUtils.getMessage("animeflv.login.fallo", username));
         }
     }
 
     @GetMapping("/novedades-episodios")
-    public List<NovedadesEpisodiosAnimeFlvDto> getNovedadesEpisodios(@RequestParam String username) {
+    public List<NovedadesEpisodiosAnimeFlvDto> getNovedadesEpisodios() {
         try {
-            if (!sessionManager.isSessionActive(username)) {
-                return List.of(new NovedadesEpisodiosAnimeFlvDto(
-                        messageUtils.getMessage("error.session.notfound"), null
-                ));
-            }
-            // Recupera las cookies de la sesion y obtiene la lista de episodios
-            Map<String, String> cookies = sessionManager.getSessionCookies(username);
-            return animeFlvScraper.obtenerUltimosEpisodiosNovedades(cookies);
+            return animeFlvScraper.obtenerUltimosEpisodiosNovedades();
         } catch (IOException e) {
-            e.printStackTrace();
-            return List.of(new NovedadesEpisodiosAnimeFlvDto(
-                    messageUtils.getMessage("animeflv.episodios.error"), null
-            ));
+            return List.of(new NovedadesEpisodiosAnimeFlvDto(messageUtils.getMessage("animeflv.episodios.error"), null));
         }
     }
 
     @GetMapping("/novedades-animes")
-    public List<NovedadesAnimeFlvDto> obtenerNovedadesAnime(@RequestParam String username) {
+    public List<NovedadesAnimeFlvDto> obtenerNovedadesAnime() {
         try {
-            if (!sessionManager.isSessionActive(username)) {
-                return List.of(new NovedadesAnimeFlvDto(
-                        messageUtils.getMessage("error.session.notfound"), null
-                ));
-            }
-            // Recupera las cookies de la sesion y obtiene la pagina de series
-            Map<String, String> cookies = sessionManager.getSessionCookies(username);
-            return animeFlvScraper.obtenerUltimasNovedades(cookies);
+            return animeFlvScraper.obtenerUltimasNovedades();
         } catch (IOException e) {
-            return List.of(new NovedadesAnimeFlvDto(
-                    messageUtils.getMessage("animeflv.animes.error"), null
-            ));
+            return List.of(new NovedadesAnimeFlvDto(messageUtils.getMessage("animeflv.animes.error"), null));
         }
     }
 
     @GetMapping("/obtener-anime")
-    public InformacionAnimeDto obtenerInformacionAnime(@RequestParam String username, String animeUrl) {
+    public InformacionAnimeDto obtenerInformacionAnime(String animeUrl) {
         try {
-            if (!sessionManager.isSessionActive(username)) {
-                return new InformacionAnimeDto(messageUtils.getMessage("error.session.notfound"));
-            }
-            // Recupera las cookies de la sesion y obtiene la pagina de series
-            Map<String, String> cookies = sessionManager.getSessionCookies(username);
-            return animeFlvScraper.obtenerInformacionAnime(cookies, animeUrl);
+            // obtiene la pagina de series
+            return animeFlvScraper.obtenerInformacionAnime(animeUrl);
         } catch (IOException e) {
             return new InformacionAnimeDto(messageUtils.getMessage("error.session.notfound"));
         }
@@ -100,11 +72,16 @@ public class AnimeFlvController {
 
     @PostMapping("/logout")
     public LoginAnimeFlvDto logout(@RequestParam String username) {
-        if (sessionManager.isSessionActive(username)) {
-            sessionManager.removeSession(username);
-            return new LoginAnimeFlvDto(username,messageUtils.getMessage("animeflv.logout.correcto", username) ,null, null);
-        } else {
-            return new LoginAnimeFlvDto("error", username,messageUtils.getMessage("error.session.notfound"), null);
+        try {
+            boolean logoutExitoso = animeFlvScraper.logout();
+            if (logoutExitoso) {
+                return new LoginAnimeFlvDto("success", username, messageUtils.getMessage("animeflv.logout.correcto", username));
+            } else {
+                return new LoginAnimeFlvDto("error", username, messageUtils.getMessage("animeflv.logout.error", username));
+            }
+        } catch (Exception e) {
+            // Manejo de errores inesperados
+            return new LoginAnimeFlvDto("error", username, messageUtils.getMessage("animeflv.logout.error", username));
         }
     }
 }

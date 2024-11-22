@@ -42,7 +42,7 @@ public class AnimeFlvScraperComponent {
      */
     public Map<String, String> login(String username, String password) {
         Map<String, String> responseMap = new HashMap<>();
-        playwrightManager.initializeBrowser();
+        playwrightManager.initializePersistentContext();
         Page page = playwrightManager.getPage();
 
         try {
@@ -56,7 +56,7 @@ public class AnimeFlvScraperComponent {
             // Enviar formulario
             page.click("button[type='submit']");
             String currentUrl = page.url();
-            if (currentUrl.equals(homeUrl)){
+            if (currentUrl.equals(homeUrl)) {
                 responseMap.put("status", "success");
                 // Extraer cookies
                 page.context().cookies().forEach(cookie -> responseMap.put(cookie.name, cookie.value));
@@ -70,13 +70,27 @@ public class AnimeFlvScraperComponent {
         return responseMap;
     }
 
+    public boolean logout() {
+        playwrightManager.initializePersistentContext();
+
+        try (Page page = playwrightManager.getPage()) {
+            // Navegar a la pagina de deslogueo
+            page.navigate(homeUrl + "/auth/sign_out");
+
+            // Verificar que se redirigio a la pagina principal
+            return page.url().equals(homeUrl);
+
+        } catch (Exception e) {
+            return false; // Error durante el proceso de logout
+        } finally {
+            playwrightManager.closeBrowser();
+        }
+    }
+
     /**
      * Obtiene los ultimos episodios agregados.
      */
-    public List<NovedadesEpisodiosAnimeFlvDto> obtenerUltimosEpisodiosNovedades(Map<String, String> cookies) throws IOException {
-        if (cookies == null) {
-            throw new IllegalStateException(messageUtils.getMessage("error.session.notfound"));
-        }
+    public List<NovedadesEpisodiosAnimeFlvDto> obtenerUltimosEpisodiosNovedades() throws IOException {
         List<NovedadesEpisodiosAnimeFlvDto> episodios = new ArrayList<>();
         Document doc = Jsoup.connect(homeUrl).get();
 
@@ -95,10 +109,7 @@ public class AnimeFlvScraperComponent {
     /**
      * Obtiene los últimos animes agregados.
      */
-    public List<NovedadesAnimeFlvDto> obtenerUltimasNovedades(Map<String, String> cookies) throws IOException {
-        if (cookies == null) {
-            throw new IllegalStateException(messageUtils.getMessage("error.session.notfound"));
-        }
+    public List<NovedadesAnimeFlvDto> obtenerUltimasNovedades() throws IOException {
         List<NovedadesAnimeFlvDto> animes = new ArrayList<>();
         Document doc = Jsoup.connect(homeUrl + "/browse").get();
 
@@ -115,13 +126,10 @@ public class AnimeFlvScraperComponent {
         return animes;
     }
 
-    public InformacionAnimeDto obtenerInformacionAnime(Map<String, String> cookies, String animeUrl) throws IOException {
-        if (cookies == null) {
-            throw new IllegalStateException(messageUtils.getMessage("error.session.notfound"));
-        }
+    public InformacionAnimeDto obtenerInformacionAnime(String animeUrl) throws IOException {
         InformacionAnimeDto informacionAnime = new InformacionAnimeDto();
         // Levantamos un navegador headless
-        playwrightManager.initializeBrowser();
+        playwrightManager.initializePersistentContext();
         try (Page page = playwrightManager.getPage()) {
             page.navigate(animeUrl);
 
