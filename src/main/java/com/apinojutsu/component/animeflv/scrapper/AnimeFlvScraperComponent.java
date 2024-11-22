@@ -58,8 +58,6 @@ public class AnimeFlvScraperComponent {
             String currentUrl = page.url();
             if (currentUrl.equals(homeUrl)) {
                 responseMap.put("status", "success");
-                // Extraer cookies
-                page.context().cookies().forEach(cookie -> responseMap.put(cookie.name, cookie.value));
             }
         } catch (Exception e) {
             responseMap.put("status", "error");

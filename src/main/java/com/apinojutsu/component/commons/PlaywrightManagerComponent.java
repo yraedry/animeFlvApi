@@ -54,7 +54,7 @@ public class PlaywrightManagerComponent {
     }
 
     /**
-     * Método llamado antes de que el bean sea destruido, limpia las sesiones persistentes.
+     * Metodo llamado antes de que el bean sea destruido, limpia las sesiones persistentes.
      */
     @PreDestroy
     public void cleanUpPersistentData() {
