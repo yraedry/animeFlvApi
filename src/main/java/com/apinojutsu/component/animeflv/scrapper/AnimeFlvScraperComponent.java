@@ -42,22 +42,27 @@ public class AnimeFlvScraperComponent {
      */
     public Map<String, String> login(String username, String password) {
         Map<String, String> responseMap = new HashMap<>();
-        playwrightManager.initializePersistentContext();
+        playwrightManager.initializePersistentContent();
         Page page = playwrightManager.getPage();
-
         try {
-            // Navegar al login de AnimeFLV
-            page.navigate(loginUrl);
+            boolean activeSession = playwrightManager.isSessionActive(homeUrl, "div[class='Login Online']");
+            if(!activeSession) {
 
-            // Completar formulario de login
-            page.fill("input[name='email']", username);
-            page.fill("input[name='password']", password);
+                // Navegar al login de AnimeFLV
+                page.navigate(loginUrl);
 
-            // Enviar formulario
-            page.click("button[type='submit']");
-            String currentUrl = page.url();
-            if (currentUrl.equals(homeUrl)) {
-                responseMap.put("status", "success");
+                // Completar formulario de login
+                page.fill("input[name='email']", username);
+                page.fill("input[name='password']", password);
+
+                // Enviar formulario
+                page.click("button[type='submit']");
+                String currentUrl = page.url();
+                if (currentUrl.equals(homeUrl)) {
+                    responseMap.put("status", "success");
+                }
+            }else{
+                responseMap.put("status", "activo");
             }
         } catch (Exception e) {
             responseMap.put("status", "error");
@@ -69,7 +74,7 @@ public class AnimeFlvScraperComponent {
     }
 
     public boolean logout() {
-        playwrightManager.initializePersistentContext();
+        playwrightManager.initializePersistentContent();
 
         try (Page page = playwrightManager.getPage()) {
             // Navegar a la pagina de deslogueo
@@ -89,19 +94,19 @@ public class AnimeFlvScraperComponent {
      * Obtiene los ultimos episodios agregados.
      */
     public List<NovedadesEpisodiosAnimeFlvDto> obtenerUltimosEpisodiosNovedades() throws IOException {
-        List<NovedadesEpisodiosAnimeFlvDto> episodios = new ArrayList<>();
+        List<NovedadesEpisodiosAnimeFlvDto> episodes = new ArrayList<>();
         Document doc = Jsoup.connect(homeUrl).get();
 
         // Busca los elementos que contienen los ultimos episodios
-        Elements episodioElements = doc.select(".ListEpisodios li");
+        Elements episodeElements = doc.select(".ListEpisodios li");
 
-        for (Element episodio : episodioElements) {
-            String tituloEpisodio = episodio.select(".Title").text();
-            String urlEpisodio = homeUrl + episodio.select("a").attr("href");
-            episodios.add(new NovedadesEpisodiosAnimeFlvDto(tituloEpisodio, urlEpisodio));
+        for (Element episode : episodeElements) {
+            String tituloEpisodio = episode.select(".Title").text();
+            String urlEpisodio = homeUrl + episode.select("a").attr("href");
+            episodes.add(new NovedadesEpisodiosAnimeFlvDto(tituloEpisodio, urlEpisodio));
         }
 
-        return episodios;
+        return episodes;
     }
 
     /**
@@ -113,11 +118,11 @@ public class AnimeFlvScraperComponent {
 
         // Busca los elementos que contienen los ultimos animes agregados
         Elements animeElements = doc.select(".ListAnimes li");
-        Set<String> titulosUnicos = new HashSet<>();
+        Set<String> uniqueTitles = new HashSet<>();
         for (Element anime : animeElements) {
             String title = anime.select(".Title").first().text();
             String animeLink = homeUrl + anime.select("a").attr("href");
-            if (titulosUnicos.add(title)) {
+            if (uniqueTitles.add(title)) {
                 animes.add(new NovedadesAnimeFlvDto(title, animeLink));
             }
         }
@@ -125,39 +130,38 @@ public class AnimeFlvScraperComponent {
     }
 
     public InformacionAnimeDto obtenerInformacionAnime(String animeUrl) throws IOException {
-        InformacionAnimeDto informacionAnime = new InformacionAnimeDto();
+        InformacionAnimeDto animeInformation = new InformacionAnimeDto();
         // Levantamos un navegador headless
-        playwrightManager.initializePersistentContext();
+        playwrightManager.initializePersistentContent();
         try (Page page = playwrightManager.getPage()) {
             page.navigate(animeUrl);
 
-            String titulo = page.querySelector("h1.Title").innerText();
-            String urlCaraturla = homeUrl + page.querySelector(".Image img").getAttribute("src");
-            String sinopsis = page.querySelector(".Description p").innerText();
-            String estado = page.querySelector(".AnmStts span").innerText();
-            informacionAnime.setNombre(titulo);
-            informacionAnime.setUrlCaratula(urlCaraturla);
-            informacionAnime.setSinopsis(sinopsis);
-            informacionAnime.setEstado(estado);
+            String title = page.querySelector("h1.Title").innerText();
+            String coverUrl = homeUrl + page.querySelector(".Image img").getAttribute("src");
+            String synopsis = page.querySelector(".Description p").innerText();
+            String state = page.querySelector(".AnmStts span").innerText();
+            animeInformation.setNombre(title);
+            animeInformation.setUrlCaratula(coverUrl);
+            animeInformation.setSinopsis(synopsis);
+            animeInformation.setEstado(state);
             page.waitForSelector("ul.ListCaps li");
 
-            List<ElementHandle> episodiosElementos = page.querySelectorAll("ul.ListCaps li");
-            for (ElementHandle elemento : episodiosElementos) {
+            List<ElementHandle> episodesElements = page.querySelectorAll("ul.ListCaps li");
+            for (ElementHandle element : episodesElements) {
                 //realizamos esto para saltarnos el primer registro
-                if (elemento.querySelector("p") == null) {
-                    String proximoEpisodio = elemento.querySelector("span").innerText();
-                    informacionAnime.setProximoEpisodio(proximoEpisodio);
+                if (element.querySelector("p") == null) {
+                    String nextEpisode = element.querySelector("span").innerText();
+                    animeInformation.setProximoEpisodio(nextEpisode);
                     continue;
                 }
-                String episodio = elemento.querySelector("p").innerText();
-                String urlEpisodio = homeUrl + elemento.querySelector("a").getAttribute("href");
-                informacionAnime.addEpisodio(episodio, urlEpisodio);
+                String episode = element.querySelector("p").innerText();
+                String urlEpisode = homeUrl + element.querySelector("a").getAttribute("href");
+                animeInformation.addEpisodio(episode, urlEpisode);
             }
         } finally {
             // Cierra la pagina despues de completar el scraping
             playwrightManager.closeBrowser();
         }
-
-        return informacionAnime;
+        return animeInformation;
     }
 }

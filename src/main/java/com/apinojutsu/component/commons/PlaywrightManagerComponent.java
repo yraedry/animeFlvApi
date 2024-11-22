@@ -17,7 +17,7 @@ public class PlaywrightManagerComponent {
     /**
      * Inicializa Playwright con un contexto persistente.
      */
-    public void initializePersistentContext() {
+    public void initializePersistentContent() {
         if (playwright == null) {
             playwright = Playwright.create();
             persistentContext = playwright.chromium().launchPersistentContext(
@@ -34,9 +34,28 @@ public class PlaywrightManagerComponent {
      */
     public Page getPage() {
         if (persistentContext == null) {
-            initializePersistentContext();
+            initializePersistentContent();
         }
         return persistentContext.newPage();
+    }
+
+    public boolean isSessionActive(String validationUrl, String loginSelector) {
+        try {
+            initializePersistentContent();
+
+            // Abrir una página y navegar a la URL de validación
+            Page page = getPage();
+            page.navigate(validationUrl);
+
+            // Comprobar si el selector de logout (o similar) está presente
+            boolean isLogged = page.locator(loginSelector).isVisible();
+            page.close();
+
+            return isLogged;
+        } catch (Exception e) {
+            System.err.println("Error al verificar la sesión: " + e.getMessage());
+            return false;
+        }
     }
 
     /**

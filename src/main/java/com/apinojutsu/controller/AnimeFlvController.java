@@ -1,7 +1,6 @@
 package com.apinojutsu.controller;
 
 import com.apinojutsu.component.animeflv.scrapper.AnimeFlvScraperComponent;
-import com.apinojutsu.component.commons.PlaywrightManagerComponent;
 import com.apinojutsu.dto.InformacionAnimeDto;
 import com.apinojutsu.dto.NovedadesAnimeFlvDto;
 import com.apinojutsu.dto.NovedadesEpisodiosAnimeFlvDto;
@@ -24,7 +23,7 @@ public class AnimeFlvController {
     private MessageUtils messageUtils;
 
     @Autowired
-    public AnimeFlvController(AnimeFlvScraperComponent animeFlvScraper, PlaywrightManagerComponent playwrightManagerComponent) {
+    public AnimeFlvController(AnimeFlvScraperComponent animeFlvScraper) {
         this.animeFlvScraper = animeFlvScraper;
     }
 
@@ -35,8 +34,11 @@ public class AnimeFlvController {
             Map<String, String> loginResponse = animeFlvScraper.login(username, password);
             if ("success".equalsIgnoreCase(loginResponse.get("status"))) {
                 return new LoginAnimeFlvDto(loginResponse.get("status"), username, messageUtils.getMessage("animeflv.login.correcto", username));
+            } else if ("activo".equalsIgnoreCase(loginResponse.get("status"))) {
+                return new LoginAnimeFlvDto("error", username, messageUtils.getMessage("animeflv.login.sesion.activa", username));
+            }else {
+                return new LoginAnimeFlvDto("error", username, messageUtils.getMessage("animeflv.login.fallo", username));
             }
-            return new LoginAnimeFlvDto("error", username, messageUtils.getMessage("animeflv.login.fallo", username));
         } catch (Exception e) {
             return new LoginAnimeFlvDto("error", username, messageUtils.getMessage("animeflv.login.fallo", username));
         }
@@ -52,7 +54,7 @@ public class AnimeFlvController {
     }
 
     @GetMapping("/novedades-animes")
-    public List<NovedadesAnimeFlvDto> obtenerNovedadesAnime() {
+    public List<NovedadesAnimeFlvDto> getNovedadesAnime() {
         try {
             return animeFlvScraper.obtenerUltimasNovedades();
         } catch (IOException e) {
@@ -61,7 +63,7 @@ public class AnimeFlvController {
     }
 
     @GetMapping("/obtener-anime")
-    public InformacionAnimeDto obtenerInformacionAnime(String animeUrl) {
+    public InformacionAnimeDto getInformacionAnime(String animeUrl) {
         try {
             // obtiene la pagina de series
             return animeFlvScraper.obtenerInformacionAnime(animeUrl);
