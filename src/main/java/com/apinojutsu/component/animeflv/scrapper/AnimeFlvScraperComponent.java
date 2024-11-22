@@ -101,9 +101,9 @@ public class AnimeFlvScraperComponent {
         Elements episodeElements = doc.select(".ListEpisodios li");
 
         for (Element episode : episodeElements) {
-            String tituloEpisodio = episode.select(".Title").text();
-            String urlEpisodio = homeUrl + episode.select("a").attr("href");
-            episodes.add(new NovedadesEpisodiosAnimeFlvDto(tituloEpisodio, urlEpisodio));
+            String episodeTitle = episode.select(".Title").text();
+            String urlEpisode = homeUrl + episode.select("a").attr("href");
+            episodes.add(new NovedadesEpisodiosAnimeFlvDto(episodeTitle, urlEpisode));
         }
 
         return episodes;
@@ -114,7 +114,7 @@ public class AnimeFlvScraperComponent {
      */
     public List<NovedadesAnimeFlvDto> obtenerUltimasNovedades() throws IOException {
         List<NovedadesAnimeFlvDto> animes = new ArrayList<>();
-        Document doc = Jsoup.connect(homeUrl + "/browse").get();
+        Document doc = Jsoup.connect(homeUrl).get();
 
         // Busca los elementos que contienen los ultimos animes agregados
         Elements animeElements = doc.select(".ListAnimes li");
