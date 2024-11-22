@@ -6,13 +6,15 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 
 @Component
 public class PlaywrightManagerComponent {
     private Playwright playwright;
     private BrowserContext persistentContext;
-    private static final String USER_DATA_DIR = "user-data-apinojutsu"; //
+    private static final String USER_DATA_DIR = System.getProperty("user.dir") + "/user-data-apinojutsu"; //
 
     /**
      * Inicializa Playwright con un contexto persistente.
@@ -79,12 +81,24 @@ public class PlaywrightManagerComponent {
     public void cleanUpPersistentData() {
         closeBrowser(); // Cierra el navegador si está abierto
 
-        // Elimina el directorio de datos persistentes
+        Path userDataPath = Paths.get(USER_DATA_DIR);
+        // Verificar si el directorio existe
+        if (!Files.exists(userDataPath)) {
+            System.out.println("El directorio de datos persistentes no existe. No hay nada que limpiar.");
+            return;
+        }
+
+        // Eliminar archivos y directorios
         try {
-            Files.walk(Paths.get(USER_DATA_DIR))
-                    .map(java.nio.file.Path::toFile)
-                    .forEach(java.io.File::delete);
-            Files.deleteIfExists(Paths.get(USER_DATA_DIR));
+            Files.walk(userDataPath)
+                    .sorted(Comparator.reverseOrder()) // Asegura que los archivos se eliminen antes que los directorios
+                    .map(Path::toFile)
+                    .forEach(file -> {
+                        if (!file.delete()) {
+                            System.err.println("No se pudo eliminar el archivo o directorio: " + file.getAbsolutePath());
+                        }
+                    });
+            Files.deleteIfExists(userDataPath);
             System.out.println("Sesiones persistentes limpiadas correctamente.");
         } catch (IOException e) {
             System.err.println("Error al limpiar las sesiones persistentes: " + e.getMessage());

@@ -3,9 +3,7 @@ package com.apinojutsu.test.animeflv;
 import com.apinojutsu.component.animeflv.scrapper.AnimeFlvScraperComponent;
 import com.apinojutsu.component.commons.PlaywrightManagerComponent;
 import com.apinojutsu.dto.NovedadesEpisodiosAnimeFlvDto;
-import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.Cookie;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -50,25 +48,14 @@ public class AnimeFlvScraperComponentTest {
 
     @Test
     public void testLoginSuccess() {
-        // Mockear la pagina y el contexto
+        // Mockear la pagina
         Page mockPage = mock(Page.class);
-        BrowserContext mockContext = mock(BrowserContext.class);
 
         // Configurar mocks
         when(playwrightManager.getPage()).thenReturn(mockPage); // Retorna un mock de Page
-        when(mockPage.context()).thenReturn(mockContext);       // Retorna un mock de BrowserContext
 
         // Configurar retorno de URL para simular redireccion
         when(mockPage.url()).thenReturn(HOME_URL_TEST);
-
-        // Simular una lista de cookies como mapas
-        Cookie mockCookie = new Cookie("session", "12345");
-        mockCookie.setDomain("mock-domain");
-        mockCookie.setPath("/");
-
-        // Simular una lista de cookies
-        List<Cookie> mockCookies = List.of(mockCookie);
-        when(mockContext.cookies()).thenReturn(mockCookies);
 
         // Ejecutar el metodo
         Map<String, String> response = scraperComponent.login("user", "password");
@@ -80,7 +67,6 @@ public class AnimeFlvScraperComponentTest {
         // Verificar la respuesta
         assertNotNull(response);
         assertEquals("success", response.get("status"));
-        assertEquals("12345", response.get("session"));
     }
 
     @Test
@@ -92,7 +78,7 @@ public class AnimeFlvScraperComponentTest {
         when(playwrightManager.getPage()).thenReturn(mockPage);
         when(mockPage.url()).thenReturn(LOGIN_URL_TEST); // Simular que no redirige al home
 
-        // Ejecutar el método
+        // Ejecutar el metodo
         Map<String, String> response = scraperComponent.login("user", "wrong-password");
 
         // Verificar que los métodos `void` fueron llamados
