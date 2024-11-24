@@ -1,10 +1,7 @@
 package com.apinojutsu.controller;
 
 import com.apinojutsu.component.animeflv.scrapper.AnimeFlvScraperComponent;
-import com.apinojutsu.dto.InformacionAnimeDto;
-import com.apinojutsu.dto.NovedadesAnimeFlvDto;
-import com.apinojutsu.dto.NovedadesEpisodiosAnimeFlvDto;
-import com.apinojutsu.dto.LoginAnimeFlvDto;
+import com.apinojutsu.dto.*;
 import com.apinojutsu.utils.MessageUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -63,12 +60,22 @@ public class AnimeFlvController {
     }
 
     @GetMapping("/obtener-anime")
-    public InformacionAnimeDto getInformacionAnime(String animeUrl) {
+    public InformacionAnimeDto getInformacionAnime(String anime) {
         try {
             // obtiene la pagina de series
-            return animeFlvScraper.obtenerInformacionAnime(animeUrl);
+            return animeFlvScraper.obtenerInformacionAnime(anime);
         } catch (IOException e) {
             return new InformacionAnimeDto(messageUtils.getMessage("error.session.notfound"));
+        }
+    }
+
+    @GetMapping("/obtener-url-descarga")
+    public InformacionEpisodioAnimeDto getEnlacesDescargaAnime(String animeEpisode) {
+        try {
+            // obtiene la pagina de series
+            return animeFlvScraper.obtenerUrlsEpisodioAnime(animeEpisode);
+        } catch (IOException e) {
+            return new InformacionEpisodioAnimeDto(messageUtils.getMessage("error.session.notfound"));
         }
     }
 

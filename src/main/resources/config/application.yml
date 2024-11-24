@@ -5,3 +5,5 @@ web:
   animeflv:
     login-url : https://www3.animeflv.net/auth/sign_in
     home-url : https://www3.animeflv.net/
+    anime-url: https://www3.animeflv.net/anime/
+    episode-url: https://www3.animeflv.net/ver/

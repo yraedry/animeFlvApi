@@ -1,0 +1,152 @@
+openapi: 3.0.1
+info:
+  title: API de AnimeFLV
+  description: API para interactuar con AnimeFLV, incluye funcionalidades como login, logout, obtención de novedades y detalles de animes.
+  version: 1.0.0
+paths:
+  /api/animeflv/login:
+    post:
+      summary: Login en AnimeFLV
+      description: Realiza el login con credenciales de usuario.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Nombre de usuario.
+                password:
+                  type: string
+                  description: Contraseña.
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Login exitoso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginAnimeFlvDto'
+        '500':
+          description: Error en el servidor.
+  /api/animeflv/novedades-episodios:
+    get:
+      summary: Obtener novedades de episodios
+      description: Devuelve una lista de los últimos episodios publicados en AnimeFLV.
+      responses:
+        '200':
+          description: Lista de episodios actualizada.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NovedadesEpisodiosAnimeFlvDto'
+        '500':
+          description: Error en el servidor.
+  /api/animeflv/novedades-animes:
+    get:
+      summary: Obtener novedades de animes
+      description: Devuelve una lista de los últimos animes publicados en AnimeFLV.
+      responses:
+        '200':
+          description: Lista de animes actualizada.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NovedadesAnimeFlvDto'
+        '500':
+          description: Error en el servidor.
+  /api/animeflv/obtener-anime:
+    get:
+      summary: Obtener información de un anime
+      description: Devuelve los detalles de un anime específico según su URL.
+      parameters:
+        - name: animeUrl
+          in: query
+          required: true
+          schema:
+            type: string
+          description: URL del anime.
+      responses:
+        '200':
+          description: Información del anime.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InformacionAnimeDto'
+        '500':
+          description: Error en el servidor.
+  /api/animeflv/logout:
+    post:
+      summary: Logout de AnimeFLV
+      description: Finaliza la sesión del usuario en AnimeFLV.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Nombre de usuario.
+              required:
+                - username
+      responses:
+        '200':
+          description: Logout exitoso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginAnimeFlvDto'
+        '500':
+          description: Error en el servidor.
+components:
+  schemas:
+    LoginAnimeFlvDto:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Estado del login/logout.
+        username:
+          type: string
+          description: Nombre de usuario.
+        message:
+          type: string
+          description: Mensaje adicional.
+    NovedadesEpisodiosAnimeFlvDto:
+      type: object
+      properties:
+        mensaje:
+          type: string
+          description: Mensaje de error o información.
+        datos:
+          type: array
+          items:
+            type: string
+          description: Lista de episodios.
+    NovedadesAnimeFlvDto:
+      type: object
+      properties:
+        mensaje:
+          type: string
+          description: Mensaje de error o información.
+        datos:
+          type: array
+          items:
+            type: string
+          description: Lista de animes.
+    InformacionAnimeDto:
+      type: object
+      properties:
+        informacion:
+          type: string
+          description: Detalles del anime.

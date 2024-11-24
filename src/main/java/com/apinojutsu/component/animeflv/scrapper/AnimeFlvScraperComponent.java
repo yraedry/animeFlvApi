@@ -2,10 +2,12 @@ package com.apinojutsu.component.animeflv.scrapper;
 
 import com.apinojutsu.component.commons.PlaywrightManagerComponent;
 import com.apinojutsu.dto.InformacionAnimeDto;
+import com.apinojutsu.dto.InformacionEpisodioAnimeDto;
 import com.apinojutsu.dto.NovedadesAnimeFlvDto;
 import com.apinojutsu.dto.NovedadesEpisodiosAnimeFlvDto;
 import com.apinojutsu.utils.MessageUtils;
 import com.microsoft.playwright.ElementHandle;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -33,6 +35,11 @@ public class AnimeFlvScraperComponent {
     @Value("${web.animeflv.home-url}")
     private String homeUrl;
 
+    @Value("${web.animeflv.anime-url}")
+    private String animeUrl;
+
+    @Value("${web.animeflv.episode-url}")
+    private String episodeUrl;
     /**
      * Realiza el login en AnimeFLV utilizando Playwright.
      *
@@ -129,12 +136,12 @@ public class AnimeFlvScraperComponent {
         return animes;
     }
 
-    public InformacionAnimeDto obtenerInformacionAnime(String animeUrl) throws IOException {
+    public InformacionAnimeDto obtenerInformacionAnime(String anime) throws IOException {
         InformacionAnimeDto animeInformation = new InformacionAnimeDto();
         // Levantamos un navegador headless
         playwrightManager.initializePersistentContent();
         try (Page page = playwrightManager.getPage()) {
-            page.navigate(animeUrl);
+            page.navigate(animeUrl + anime);
 
             String title = page.querySelector("h1.Title").innerText();
             String coverUrl = homeUrl + page.querySelector(".Image img").getAttribute("src");
@@ -164,4 +171,55 @@ public class AnimeFlvScraperComponent {
         }
         return animeInformation;
     }
+
+    public InformacionEpisodioAnimeDto obtenerUrlsEpisodioAnime(String episodeAnimeName) throws IOException {
+        InformacionEpisodioAnimeDto visualizationUrls = new InformacionEpisodioAnimeDto();
+        // Inicializamos el navegador headless
+        playwrightManager.initializePersistentContent();
+        try (Page page = playwrightManager.getPage()) {
+            // Navegamos a la URL
+            page.navigate(episodeUrl + episodeAnimeName);
+
+            visualizationUrls.setNombre(page.querySelector("h1.Title").innerText().replaceAll("Episodio \\d+", "").trim());
+            visualizationUrls.setEpisodio(page.querySelector("h2.SubTitle").innerText());
+
+            //obtenemos los enlace de descarga estaticos
+            Locator tableDownloadOptions = page.locator("table.RTbl.Dwnl tbody tr");
+            for (int i = 0; i < tableDownloadOptions.count(); i++) {
+                Locator fila = tableDownloadOptions.nth(i);
+                String servidor = fila.locator("td:nth-child(1)").textContent();
+                String enlace = fila.locator("td:nth-child(4) a").getAttribute("href");
+                visualizationUrls.addEnlaceDescarga(servidor,enlace);
+            }
+
+            // Esperar hasta que el contenido principal este cargado ya que se carga via javascript
+            page.waitForSelector("#video_box");
+            Locator ulOpciones = page.locator("ul.CapiTnv.nav.nav-pills");
+            ulOpciones.waitFor();
+
+            // Localizar los <li> dentro del ul
+            Locator opciones = ulOpciones.locator("li");
+
+            // Iterar sobre cada opción
+            for (int i = 0; i < opciones.count(); i++) {
+                // Vamos cambiando entre las diferentes opciones para obtener los enlaces
+                opciones.nth(i).click();
+
+                // Obtenemos lo enlaces de visualizacion
+                Locator iframeLocator = page.locator("#video_box iframe");
+                if (iframeLocator.count() > 0) {
+                    String dataOriginalTitle = opciones.nth(i).getAttribute("data-original-title");
+                    String iframeSrc = iframeLocator.first().getAttribute("src");
+                    if (iframeSrc != null && !iframeSrc.isEmpty()) {
+                        visualizationUrls.addEnlaceVisualizacion(dataOriginalTitle, iframeSrc);
+                    }
+                }
+            }
+        } finally {
+            // Cerramos el navegador al finalizar
+            playwrightManager.closeBrowser();
+        }
+
+        return visualizationUrls;
+        }
 }
