@@ -7,3 +7,8 @@ web:
     home-url : https://www3.animeflv.net/
     anime-url: https://www3.animeflv.net/anime/
     episode-url: https://www3.animeflv.net/ver/
+
+bloqueadores:
+    path:
+      easylist: static/blocklists/easylist.txt
+

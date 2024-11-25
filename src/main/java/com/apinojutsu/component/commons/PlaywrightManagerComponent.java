@@ -2,30 +2,51 @@ package com.apinojutsu.component.commons;
 
 import com.microsoft.playwright.*;
 import jakarta.annotation.PreDestroy;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.InputStreamReader;
+import java.nio.file.*;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 @Component
 public class PlaywrightManagerComponent {
+    @Value("${bloqueadores.path.easylist}")
+    private String easyListPath;
+
     private Playwright playwright;
     private BrowserContext persistentContext;
-    private static final String USER_DATA_DIR = System.getProperty("user.dir") + "/user-data-apinojutsu"; //
-
+    private static final String USER_DATA_DIR = System.getProperty("user.dir") + "/user-data-apinojutsu"; //// Directorio de listas de bloqueo
+    private final Set<String> dominiosBloqueados = new HashSet<>();
     /**
      * Inicializa Playwright con un contexto persistente.
      */
     public void initializePersistentContent() {
         if (playwright == null) {
             playwright = Playwright.create();
+            if (dominiosBloqueados.isEmpty()) {
+                loadBlocklist();
+            }
             persistentContext = playwright.chromium().launchPersistentContext(
                     Paths.get(USER_DATA_DIR),
                     new BrowserType.LaunchPersistentContextOptions().setHeadless(true)
             );
+            // Configurar bloqueo de publicidad
+            persistentContext.route("**/*", route -> {
+                String url = route.request().url();
+                if (isBlocked(url)) {
+                    System.out.println("Bloqueado: " + url);
+                    route.abort(); // Bloquea la solicitud
+                } else {
+                    route.resume(); // Permite la solicitud
+                }
+            });
         }
     }
 
@@ -104,4 +125,31 @@ public class PlaywrightManagerComponent {
             System.err.println("Error al limpiar las sesiones persistentes: " + e.getMessage());
         }
     }
+
+    /**
+     * Carga la lista de bloqueo desde un archivo y la almacena en un HashSet.
+     */
+    private void loadBlocklist() {
+        Resource resource = new ClassPathResource(easyListPath); // Ruta al archivo
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
+            System.out.println("Cargando EasyList en HashSet...");
+            reader.lines()
+                    .filter(line -> !line.startsWith("#") && !line.trim().isEmpty()) // Excluye comentarios y líneas vacías
+                    .forEach(dominiosBloqueados::add); // Añade cada dominio al HashSet
+            System.out.println("EasyList cargada con " + dominiosBloqueados.size() + " dominios.");
+        } catch (IOException e) {
+            System.err.println("Error al cargar la lista de bloqueo: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Verifica si un dominio está bloqueado utilizando el HashSet.
+     *
+     * @param dominio URL o dominio a verificar.
+     * @return true si está bloqueado, false de lo contrario.
+     */
+    private boolean isBlocked(String dominio) {
+        return dominiosBloqueados.contains(dominio);
+    }
+
 }
