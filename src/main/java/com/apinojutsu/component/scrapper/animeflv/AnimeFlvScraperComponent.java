@@ -1,4 +1,4 @@
-package com.apinojutsu.component.animeflv.scrapper;
+package com.apinojutsu.component.scrapper.animeflv;
 
 import com.apinojutsu.component.commons.PlaywrightManagerComponent;
 import com.apinojutsu.dto.InformacionAnimeDto;
@@ -49,23 +49,18 @@ public class AnimeFlvScraperComponent {
      */
     public Map<String, String> login(String username, String password) {
         Map<String, String> responseMap = new HashMap<>();
-        playwrightManager.initializePersistentContent();
         Page page = playwrightManager.getPage();
         try {
-            boolean activeSession = playwrightManager.isSessionActive(homeUrl, "div[class='Login Online']");
-            if(!activeSession) {
-
                 // Navegar al login de AnimeFLV
                 page.navigate(loginUrl);
-
-                // Completar formulario de login
+                // Completar formulario de login si no estamos ya logueados
+            if(page.url().equalsIgnoreCase(loginUrl)){
                 page.fill("input[name='email']", username);
                 page.fill("input[name='password']", password);
 
                 // Enviar formulario
                 page.click("button[type='submit']");
-                String currentUrl = page.url();
-                if (currentUrl.equals(homeUrl)) {
+                if (page.url().equals(homeUrl)) {
                     responseMap.put("status", "success");
                 }
             }else{
@@ -81,8 +76,6 @@ public class AnimeFlvScraperComponent {
     }
 
     public boolean logout() {
-        playwrightManager.initializePersistentContent();
-
         try (Page page = playwrightManager.getPage()) {
             // Navegar a la pagina de deslogueo
             page.navigate(homeUrl + "/auth/sign_out");
@@ -139,7 +132,6 @@ public class AnimeFlvScraperComponent {
     public InformacionAnimeDto obtenerInformacionAnime(String anime) throws IOException {
         InformacionAnimeDto animeInformation = new InformacionAnimeDto();
         // Levantamos un navegador headless
-        playwrightManager.initializePersistentContent();
         try (Page page = playwrightManager.getPage()) {
             page.navigate(animeUrl + anime);
 
@@ -172,25 +164,15 @@ public class AnimeFlvScraperComponent {
         return animeInformation;
     }
 
-    public InformacionEpisodioAnimeDto obtenerUrlsEpisodioAnime(String episodeAnimeName) throws IOException {
+    public InformacionEpisodioAnimeDto obtenerUrlsVisualizacionEpisodioAnime(String episodeAnimeName) throws IOException {
         InformacionEpisodioAnimeDto visualizationUrls = new InformacionEpisodioAnimeDto();
         // Inicializamos el navegador headless
         playwrightManager.initializePersistentContent();
         try (Page page = playwrightManager.getPage()) {
             // Navegamos a la URL
             page.navigate(episodeUrl + episodeAnimeName);
-
             visualizationUrls.setNombre(page.querySelector("h1.Title").innerText().replaceAll("Episodio \\d+", "").trim());
             visualizationUrls.setEpisodio(page.querySelector("h2.SubTitle").innerText());
-
-            //obtenemos los enlace de descarga estaticos
-            Locator tableDownloadOptions = page.locator("table.RTbl.Dwnl tbody tr");
-            for (int i = 0; i < tableDownloadOptions.count(); i++) {
-                Locator fila = tableDownloadOptions.nth(i);
-                String servidor = fila.locator("td:nth-child(1)").textContent();
-                String enlace = fila.locator("td:nth-child(4) a").getAttribute("href");
-                visualizationUrls.addEnlaceDescarga(servidor,enlace);
-            }
 
             // Esperar hasta que el contenido principal este cargado ya que se carga via javascript
             page.waitForSelector("#video_box");
@@ -222,4 +204,31 @@ public class AnimeFlvScraperComponent {
 
         return visualizationUrls;
         }
+
+    public InformacionEpisodioAnimeDto obtenerUrlsDescargaEpisodioAnime(String episodeAnimeName) throws IOException {
+        InformacionEpisodioAnimeDto visualizationUrls = new InformacionEpisodioAnimeDto();
+        // Inicializamos el navegador headless
+        playwrightManager.initializePersistentContent();
+        try (Page page = playwrightManager.getPage()) {
+            // Navegamos a la URL
+            page.navigate(episodeUrl + episodeAnimeName);
+
+            visualizationUrls.setNombre(page.querySelector("h1.Title").innerText().replaceAll("Episodio \\d+", "").trim());
+            visualizationUrls.setEpisodio(page.querySelector("h2.SubTitle").innerText());
+
+            //obtenemos los enlace de descarga estaticos
+            Locator tableDownloadOptions = page.locator("table.RTbl.Dwnl tbody tr");
+            for (int i = 0; i < tableDownloadOptions.count(); i++) {
+                Locator fila = tableDownloadOptions.nth(i);
+                String servidor = fila.locator("td:nth-child(1)").textContent();
+                String enlace = fila.locator("td:nth-child(4) a").getAttribute("href");
+                visualizationUrls.addEnlaceDescarga(servidor,enlace);
+            }
+        } finally {
+            // Cerramos el navegador al finalizar
+            playwrightManager.closeBrowser();
+        }
+
+        return visualizationUrls;
+    }
 }

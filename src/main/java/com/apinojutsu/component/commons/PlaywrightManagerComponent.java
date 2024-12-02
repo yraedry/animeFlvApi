@@ -1,6 +1,7 @@
 package com.apinojutsu.component.commons;
 
 import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.Cookie;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -13,6 +14,7 @@ import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -27,6 +29,8 @@ public class PlaywrightManagerComponent {
     /**
      * Inicializa Playwright con un contexto persistente.
      */
+
+
     public void initializePersistentContent() {
         if (playwright == null) {
             playwright = Playwright.create();
@@ -35,13 +39,21 @@ public class PlaywrightManagerComponent {
             }
             persistentContext = playwright.chromium().launchPersistentContext(
                     Paths.get(USER_DATA_DIR),
-                    new BrowserType.LaunchPersistentContextOptions().setHeadless(true)
+                    new BrowserType.LaunchPersistentContextOptions()
+                            .setHeadless(true)
+                            .setArgs(List.of(
+                                    "--disable-popup-blocking",
+                                    "--disable-dev-shm-usage",
+                                    "--no-sandbox",
+                                    "--disable-extensions",
+                                    "--disable-sync",
+                                    "--disable-background-networking"
+                            ))
             );
             // Configurar bloqueo de publicidad
             persistentContext.route("**/*", route -> {
                 String url = route.request().url();
                 if (isBlocked(url)) {
-                    System.out.println("Bloqueado: " + url);
                     route.abort(); // Bloquea la solicitud
                 } else {
                     route.resume(); // Permite la solicitud
@@ -59,7 +71,19 @@ public class PlaywrightManagerComponent {
         if (persistentContext == null) {
             initializePersistentContent();
         }
+        // Reutiliza la pestaña abierta por defecto si existe
+        if (!persistentContext.pages().isEmpty()) {
+            return persistentContext.pages().get(0);
+        }
         return persistentContext.newPage();
+    }
+
+    public BrowserContext getContext() {
+        return persistentContext;
+    }
+
+    public void addCookiesContext(List<Cookie> cookies) {
+        persistentContext.addCookies(cookies);
     }
 
     public boolean isSessionActive(String validationUrl, String loginSelector) {
@@ -149,7 +173,7 @@ public class PlaywrightManagerComponent {
      * @return true si está bloqueado, false de lo contrario.
      */
     private boolean isBlocked(String dominio) {
-        return dominiosBloqueados.contains(dominio);
+        return dominiosBloqueados.stream().anyMatch(dominio::contains);
     }
 
 }

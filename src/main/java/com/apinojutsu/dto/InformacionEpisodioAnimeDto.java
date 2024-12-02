@@ -15,7 +15,11 @@ import java.util.List;
 public class InformacionEpisodioAnimeDto {
     private String nombre;
     private String episodio;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<InformacionEpisodioAnimeDto.EnlaceEpisodiosDto> enlacesVisualizacion = new ArrayList<>();
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<InformacionEpisodioAnimeDto.EnlaceEpisodiosDto> enlacesDescarga = new ArrayList<>();
 
 

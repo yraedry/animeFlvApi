@@ -1,6 +1,6 @@
 package com.apinojutsu.test.animeflv;
 
-import com.apinojutsu.component.animeflv.scrapper.AnimeFlvScraperComponent;
+import com.apinojutsu.component.scrapper.animeflv.AnimeFlvScraperComponent;
 import com.apinojutsu.component.commons.PlaywrightManagerComponent;
 import com.apinojutsu.dto.InformacionAnimeDto;
 import com.apinojutsu.dto.NovedadesAnimeFlvDto;
@@ -24,7 +24,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
