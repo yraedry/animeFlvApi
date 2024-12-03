@@ -103,7 +103,9 @@ public class AnimeFlvScraperComponent {
         for (Element episode : episodeElements) {
             String episodeTitle = episode.select(".Title").text();
             String urlEpisode = homeUrl + episode.select("a").attr("href");
-            episodes.add(new NovedadesEpisodiosAnimeFlvDto(episodeTitle, urlEpisode));
+            String episodeNumber = episode.select(".Capi").text();
+            String coverAnime = homeUrl + episode.select("img").attr("src");
+            episodes.add(new NovedadesEpisodiosAnimeFlvDto(episodeTitle, urlEpisode, episodeNumber, coverAnime));
         }
 
         return episodes;

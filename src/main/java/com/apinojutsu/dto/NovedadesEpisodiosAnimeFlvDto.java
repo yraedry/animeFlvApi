@@ -10,4 +10,6 @@ import lombok.NoArgsConstructor;
 public class NovedadesEpisodiosAnimeFlvDto {
     private String titulo;
     private String url;
+    private String capitulo;
+    private String caratula;
 }
