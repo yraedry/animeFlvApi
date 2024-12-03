@@ -46,7 +46,7 @@ public class AnimeFlvController {
         try {
             return animeFlvScraper.obtenerUltimosEpisodiosNovedades();
         } catch (IOException e) {
-            return List.of(new NovedadesEpisodiosAnimeFlvDto(messageUtils.getMessage("animeflv.episodios.error"), null));
+            return List.of(new NovedadesEpisodiosAnimeFlvDto(messageUtils.getMessage("animeflv.episodios.error"), null, null, null));
         }
     }
 
